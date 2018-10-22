@@ -45,9 +45,6 @@ If you're planning to use e-mail services, you will need to configure the e-mail
 
 The *docker-compose* command will build the PostGIS database container and the API container.
 
-
-A superuser is also created and can be configured in file */src/main/resources/migrations/users.json*. **Make sure you change the password.**
-
 ## Running
 
 * `docker-compose up`
@@ -56,6 +53,8 @@ A superuser is also created and can be configured in file */src/main/resources/m
 
 * `gradlew run` - starts an embedded Jetty server, navigate to `localhost:8080/api/v2/` to reach the API
 * `gradlew run -PappArgs=migrate` - start the server and migrate initial data
+
+A superuser is created and can be configured in file */src/main/resources/migrations/users.json*. **Make sure you change the password.**
 
 ---
 
