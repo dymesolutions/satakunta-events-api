@@ -1,0 +1,26 @@
+# Gradle + editors
+/.classpath
+/.project
+/.settings
+/.vscode
+/out
+.gradle/
+/.idea/
+*.iml
+
+# Java
+bin/
+build/
+
+# Mac stuff
+.DS_Store
+
+# Terraform files
+.terraform/
+
+# NodeJS
+node_modules/
+dist/
+
+# Serverless
+.serverless/

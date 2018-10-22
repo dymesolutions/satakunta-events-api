@@ -1,0 +1,17 @@
+[
+  {
+    "originId": "admins",
+    "name": "Super Admins",
+    "dataSourceId": "system"
+  },
+  {
+    "originId": "others",
+    "name": "Others",
+    "dataSourceId": "system"
+  },
+  {
+    "originId": "kaupunki",
+    "name": "Porin kaupunki",
+    "dataSourceId": "pori"
+  }
+]

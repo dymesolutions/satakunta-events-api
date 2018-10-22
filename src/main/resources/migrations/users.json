@@ -1,0 +1,12 @@
+[
+  {
+    "username": "admin@localhost",
+    "email": "admin@localhost",
+    "password": "changepassword",
+    "firstName": "Administrator",
+    "lastName": "",
+    "isStaff": true,
+    "isSuperUser": true,
+    "isActive": true
+  }
+]

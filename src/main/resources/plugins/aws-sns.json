@@ -1,0 +1,13 @@
+{
+  "id": "kotlin-aws-sns",
+  "name": "AWS SNS Topic Plugin",
+  "description": "Publish to AWS SNS topic",
+  "properties": {
+    "topicArn": "",
+    "region": ""
+  },
+  "interface": {
+    "className": "AWSSNSPlugin",
+    "packageName": "com.dymesolutions.common.plugins"
+  }
+}

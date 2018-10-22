@@ -1,0 +1,9 @@
+[
+  {
+    "id": "others",
+    "name": "Muut",
+    "originId": "topics",
+    "dataSourceId": "pori",
+    "publisherId": "pori:kaupunki"
+  }
+]

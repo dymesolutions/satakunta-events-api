@@ -1,0 +1,1576 @@
+swagger: '2.0'
+info:
+  title: Satakunta Events information API
+  description: >-
+    Satakunta Events provides categorized data on events and places using JSON-LD
+    format.
+    
+    
+    
+    Events can be searched by date and location.
+
+    
+    JSON-LD format is streamlined using include mechanism. API users can request
+    that certain
+
+    fields are included directly into the result, instead of being hyperlinks to
+    objects.
+
+
+    Several fields are multilingual. These are implemented as object with each
+    language variant
+
+    as property. In this specification each multilingual field has (fi,sv,en)
+    property triplet as
+
+    example.
+  termsOfService: (depends on data provider)
+  version: v2
+host: www.satakuntaevents.fi
+basePath: /api/v2
+schemes:
+  - https
+  - http
+produces:
+  - application/json
+tags:
+  - name: event
+    description: Search and Edit events
+  - name: filter
+    description: Search for keywords and places for filtering events
+  - name: language
+    description: Get supported languages
+  - name: image
+    description: Get and upload images
+parameters:
+  page_param:
+    name: page
+    in: query
+    description: request particular page in paginated results
+    required: false
+    type: integer
+  pagesize_param:
+    name: page_size
+    in: query
+    description: request that server delivers page_size results in response
+    required: false
+    type: integer
+  sort:
+    name: sort
+    in: query
+    description: >-
+      return the results in ascending or descending order by the named field.
+      sorting is only supported for some string, integer and datetime fields.
+    required: false
+    type: string
+  event_sort_param:
+    name: sort
+    in: query
+    type: string
+    description: >-
+      Sort the returned events in the given order. Possible sorting criteria are
+      'start_time', 'end_time', 'duration' and 'last_modified_time'. The default
+      ordering is '-last_modified_time'.
+  place_sort_param:
+    name: sort
+    in: query
+    type: string
+    description: >-
+      Sort the returned places in the given order. Possible sorting criteria are
+      'n_events', 'id', 'name', 'street_address' and 'postal_code'. The default
+      ordering is '-n_events'.
+  keyword_sort_param:
+    name: sort
+    in: query
+    type: string
+    description: >-
+      Sort the returned keywords in the given order. Possible sorting criteria
+      are 'n_events', 'id', 'name', 'data_source'. The default ordering is
+      '-data_source', '-n_events'.
+  include_param:
+    name: include
+    in: query
+    type: array
+    items:
+      type: string
+    description: >-
+      Embed given reference-type fields directly into the response, otherwise
+      they are returned as URI references.
+  event_text_param:
+    name: text
+    in: query
+    description: >-
+      Search (case insensitive) through all multilingual text fields (name,
+      description, short_description, info_url) of an event (every language).
+      Multilingual fields contain the text that users are expected to care
+      about, thus multilinguality is useful discriminator.
+    required: false
+    type: string
+  event_last_modified_param:
+    name: last_modified_since
+    in: query
+    description: Search for events that have been modified since or at this time.
+    type: string
+    format: dateTime
+  event_bbox_param:
+    name: bbox
+    in: query
+    type: array
+    items:
+      type: string
+    minItems: 4
+    maxItems: 4
+    description: >-
+      Search for events that are within this bounding box. Decimal coordinates
+      are given in order west, south, east, north. Period is used as decimal
+      separator.
+  event_start_param:
+    name: start
+    in: query
+    type: string
+    format: date-time
+    description: >-
+      Search for events beginning or ending after this time. Dates can be
+      specified using ISO 8601 ("2016-01-12") and additionally "today".
+  event_end_param:
+    name: end
+    in: query
+    type: string
+    format: date-time
+    description: >-
+      Search for events beginning or ending before this time. Dates can be
+      specified using ISO 8601 ("2016-01-12") and additionally "today".
+  event_data_source_param:
+    name: data_source
+    in: query
+    type: string
+    description: Search for events that come from the specified source system
+  event_location_param:
+    name: location
+    in: query
+    type: array
+    items:
+      type: integer
+    description: >-
+      Search for events in given locations as specified by id. Multiple ids are
+      separated by comma
+  event_keyword_param:
+    name: keyword
+    in: query
+    type: string
+    description: >-
+      Search for events with given keywords as specified by id. Multiple ids are
+      separated by comma
+  event_recurring_param:
+    name: recurring
+    in: query
+    type: string
+    enum:
+      - super
+      - sub
+    description: >-
+      Search for events based on whether they are part of recurring event set.
+      'super' specifies recurring, while 'sub' is non-recurring.
+  event_min_duration_param:
+    name: min_duration
+    in: query
+    type: integer
+    description: Search for events that are longer than given time in seconds
+  event_max_duration_param:
+    name: max_duration
+    in: query
+    type: integer
+    description: Search for events that are shorter than given time in seconds
+  event_organization_param:
+    name: publisher
+    in: query
+    type: string
+    description: Search for events published by the given organization
+definitions:
+  meta_definition:
+    title: Meta
+    description: >-
+      Meta record for result pagination. All results from API are paginated, ie.
+      delivered in chunks of X results. This records describes how many results
+      there are in total, and how to access previous and next pages.
+    type: object
+    properties:
+      count:
+        description: Total amount of items found
+        type: integer
+      next:
+        description: URL for the next page of items
+        type: string
+        format: url
+      previous:
+        description: URL for the previous page of items
+        type: string
+        format: url
+  place:
+    type: object
+    title: Place
+    description: >-
+      Places describe physical locations for events and means for contacting
+      people responsible for these locations. Place definitions come from
+      organizations publishing events (field "publisher") and can thus have
+      slightly different semantics between places sourced from different
+      organizations.
+    required:
+      - name
+      - position
+    properties:
+      id:
+        type: string
+        description: >-
+          Consists of source prefix and source specific identifier. These should
+          be URIs uniquely identifying the place, and preferably also well
+          formed http-URLs pointing to more information about the place.
+      custom_data:
+        type: array
+        description: >-
+          Key value field for custom data.
+        items:
+          type: object
+          properties:
+            key:
+              type: string
+            value:
+              type: string
+      name:
+        type: object
+        description: 'Name of the place, multilingual'
+        properties:
+          fi:
+            type: string
+            description: place name in Finnish
+          sv:
+            type: string
+            description: place name in Swedish
+          en:
+            type: string
+            description: place name in English
+      images:
+        type: array
+        items:
+          $ref: '#/definitions/image'
+      origin_id:
+        type: string
+        description: >-
+          Place identifier in the originating system, these should be in same
+          format as id but variations are more likely than with id.
+      created_time:
+        type: string
+        format: date-time
+        description: Creation time for the place entry.
+      last_modified_time:
+        type: string
+        format: date-time
+        description: >-
+          Time this place was modified in the datastore behind the API (not
+          necessarily in the originating system)
+      info_url:
+        description: Link (URL) to a page with more information about place
+        type: object
+        properties:
+          fi:
+            description: Link to Finnish page
+            type: string
+            format: url
+          se:
+            description: Link to Swedish page
+            type: string
+            format: url
+          en:
+            description: Link to English page
+            type: string
+            format: url
+      description:
+        description: >-
+          Short description of the place, multilingual.
+        type: object
+        properties:
+          fi:
+            type: string
+            description: place description in Finnish
+          sv:
+            type: string
+            description: place description in Swedish
+          en:
+            type: string
+            description: place description in English
+      position:
+        description: geographic position of the place specified using subset of GeoJSON
+        type: object
+        properties:
+          coordinates:
+            description: coordinates in format specified by type property
+            type: array
+            items:
+              type: number
+          type:
+            description: >-
+              interpretation of the coordinates property. Only point is
+              supported in this version
+            type: string
+            enum:
+              - Point
+      email:
+        type: string
+        description: 'Contact email for the place, note that this is NOT multilingual'
+      telephone:
+        type: object
+        description: 'Contact phone number for the place, multilingual'
+        properties:
+          fi:
+            type: string
+            description: phone number for Finnish speakers
+          sv:
+            type: string
+            description: phone number for Swedish speakers
+          en:
+            type: string
+            description: phone number for English speakers
+      contact_type:
+        type: string
+        description: >-
+      street_address:
+        description: 'Street address for the place, multilingual'
+        type: object
+        properties:
+          fi:
+            type: string
+            description: address in Finnish
+          sv:
+            type: string
+            description: address in Swedish
+          en:
+            type: string
+            description: address in English
+      address_locality:
+        description: >-
+          Describes where the address is located, typically this would be name
+          of the city
+        type: object
+        properties:
+          fi:
+            type: string
+            description: locality in Finnish
+          sv:
+            type: string
+            description: locality in Swedish
+          en:
+            type: string
+            description: locality in English
+      address_region:
+        type: string
+        description: 'Larger region for address (like states), not typically used in Finland'
+      postal_code:
+        type: string
+        description: Postal code of the location (as used by traditional mail)
+      post_office_box_num:
+        type: string
+        description: >-
+          PO box for traditional mail, in case mail is not delivered to the
+          building
+      address_country:
+        type: string
+        description: 'Country for the place, NOT multilingual'
+      deleted:
+        type: boolean
+        description: >-
+          This place entry is not used anymore, but old events still reference
+          it. This might be because of duplicate removal.
+      data_source:
+        type: string
+        description: >-
+          Identifies the source for data, this is specific to API provider. This
+          is useful for API users, as any data quality issues are likely to be
+          specific to data source and workarounds can be applied as such.
+      publisher:
+        type: string
+        description: >-
+          Organization that provided the event that this place is associated
+          with
+  image:
+    title: Image
+    description: 'Images are used as pictures for events, places and organizers.'
+    type: object
+    required:
+      - url
+    properties:
+      name:
+        type: object
+        properties:
+          fi:
+            type: string
+            description: Image description in Finnish
+          sv:
+            type: string
+            description: Image description in Swedish
+          en:
+            type: string
+            description: Image description in English
+      publisher:
+        type: string
+        description: The organization responsible for the image.
+      created_time:
+        type: string
+        format: date-time
+        description: Creation time for the image.
+      last_modified_time:
+        type: string
+        format: date-time
+        description: >-
+          Time this image was modified in the datastore behind the API (not
+          necessarily in the originating system)
+      created_by:
+        type: string
+        description: URL reference to the user that created this record (user endpoint)
+      last_modified_by:
+        type: string
+        description: >-
+          URL reference to the user that last modfied this record (user
+          endpoint)
+      url:
+        type: string
+        description: The image file URL.
+      cropping:
+        type: string
+        description: Cropping data for the image.
+      license:
+        type: string
+        description: >-
+          License data for the image. May be "cc_by" (default) or "event_only".
+          The latter license restricts use of the image and is specified on the
+          API front page.
+  keyword:
+    title: Keyword
+    description: >-
+      Keywords are used to describe events. Linked events uses namespaced
+      keywords in order to support having events from different sources.
+      Namespaces are needed because keywords are defined by the organization
+      sourcing the events and can therefore overlap in meaning. Conversely the
+      meaning of same keyword can vary between organizations. Organization
+      sourcing the keyword can be identified by data_source field. Data_source
+      field will later specify standardized namespaces as well.
+    type: object
+    required:
+      - id
+      - name
+      - data_source
+    properties:
+      id:
+        type: string
+        description: >-
+          Consists of source prefix and source specific identifier. These should
+          be URIs uniquely identifying the keyword, and preferably also well
+          formed http-URLs pointing to more information about the keyword.
+      name:
+        type: object
+        properties:
+          fi:
+            type: string
+            description: Keyword in Finnish
+          sv:
+            type: string
+            description: Keyword in Swedish
+          en:
+            type: string
+            description: Keyword in English
+      images:
+        type: array
+        items:
+          $ref: '#/definitions/image'
+      origin_id:
+        type: string
+        description: >-
+          Identifier for the keyword in the organization using this keyword. For
+          standardized namespaces this will be a shared identifier.
+      created_time:
+        type: string
+        format: date-time
+        description: Creation time for the keyword entry.
+      last_modified_time:
+        type: string
+        format: date-time
+        description: >-
+          Time this place was modified in the datastore behind the API (not
+          necessarily in the originating system)
+      aggregate:
+        type: boolean
+        description: >-
+          This keyword is an combination of several keywords at
+          source
+      data_source:
+        type: string
+        description: >-
+          Source of the keyword, typically API provider specific identifier.
+          Will also be used to specify standardized namespaces as they are
+          brought into use.
+      created_by:
+        type: string
+        description: >-
+          URL reference to the user that created this record (user
+          endpoint)
+      last_modified_by:
+        type: string
+        description: >-
+          URL reference to the user that last modfied this record
+          (user endpoint)
+      alt_labels:
+        type: array
+        items:
+          type: string
+        description: >-
+          Alternative labels for this keyword, no language
+          specified.
+  keyword_set:
+    title: Keyword set
+    description: >-
+      Keyword sets are used to group keywords together into classification
+      groups. For example, one set of keywords might describe themes used by an
+      event provider and another could be used to describe audience groups.
+    type: object
+    required:
+      - id
+      - name
+      - keywords
+    properties:
+      id:
+        type: string
+        description: >-
+          Unique identifier for this keyword_set. These should be URIs
+          identifying the source and the keyword_set itself, and preferably also
+          well formed http-URLs pointing to more information about the keyword.
+      name:
+        type: string
+        description: >-
+          Name for this keyword_set. This should be human readable, such that it
+          could be shown as label in UI
+      origin_id:
+        type: string
+        description: 'Set identifier in the originating system, if any'
+      created_time:
+        type: string
+        format: date-time
+        description: Time when this keyword_set was created (ISO 8601)
+      last_modified_time:
+        type: string
+        format: date-time
+        description: Time when this keyword_set was last modified (ISO 8601)
+      data_source:
+        type: string
+        description: >-
+          Unique identifier (URI)for the system where this keyword_set
+          originated, if any
+      last_modified_by:
+        type: string
+        description: Which API user most recently edited this keyword
+      usage:
+        type: string
+        description: >-
+          Usage type for this keyword_set. These are allow UIs to show the set
+          in appropriate place.
+        enum:
+          - any
+          - keyword
+          - audience
+      organization:
+        type: string
+        description: Organization that has defined this keyword_set
+      keywords:
+        type: array
+        description: Keywords that belong to this keyword_set
+        items:
+          $ref: '#/definitions/keyword'
+  language:
+    title: Languages supported in this API
+    type: object
+    description: >-
+      Primary purpose of this endpoint is to allow users to identify which
+      languages are supported for multilingual fields. It also has translations
+      for the names of the languages.
+    required:
+      - id
+      - name
+    properties:
+      id:
+        type: string
+        description: Identifier for the language (typically ISO639-1)
+      name:
+        type: object
+        description: >-
+          Translation for the language name. Properties shown here are examples,
+          it is suggested that every language supported has its name translated
+          to every other language. Users of the API cannot rely on any
+          translations being present.
+        properties:
+          fi:
+            description: Name of the language in Finnish
+            type: string
+          se:
+            description: Name of the language in Swedish
+            type: string
+          en:
+            description: Name of the language in English
+            type: string
+  event:
+    title: Events
+    type: object
+    description: >-
+      Describes the actual events. Linked events API supports organizing events
+      into hierarchies. This is implemented with collection events called "super
+      events". Super events are normal event objects, that reference contained
+      events in "sub_events" property.
+    required:
+      - name
+      - location
+      - start_time
+      - keywords
+      - publication_status
+    properties:
+      id:
+        description: >-
+          consists of source prefix and source specific identifier. These should
+          be URIs uniquely identifying the event, and preferably also well
+          formed http-URLs pointing to more information about the event.
+        type: string
+      location:
+        $ref: '#/definitions/place'
+      keywords:
+        description: array of keyword uri references
+        type: array
+        items:
+          type: string
+          format: uri
+      in_language:
+        description: the languages spoken or supported at the event
+        type: array
+        items:
+          $ref: '#/definitions/language'
+      super_event:
+        description: references the aggregate event containing this event
+        type: string
+      super_event_type:
+        description: >-
+          If the event has sub_events, describes the type of the event. Current
+          options are 'null' and 'recurring', which means a repeating event.
+        type: string
+      event_status:
+        type: string
+        description: >-
+          As defined in schema.org/Event. Postponed events do not have a date
+          set, rescheduled events have been moved to different date.
+      publication_status:
+        type: string
+        description: >-
+          Only available in POST/PUT. Specifies whether the event should be
+          published in the API ('public') or not ('draft').
+      external_links:
+        type: array
+        items:
+          $ref: '#/definitions/eventlink'
+        description: See external link definition
+      offers:
+        type: array
+        items:
+          $ref: '#/definitions/offer'
+        description: See offer definition
+      sub_events:
+        type: array
+        items:
+          type: string
+        description: >-
+          for aggregate events this contains references to all sub events.
+          Usually this means that the sub events are part of series. The field
+          'super_event_type' tells the type of the aggregate event.
+      custom_data:
+        type: string
+        description: >-
+          Key value field for custom data.
+      name:
+        type: object
+        description: 'Short descriptive name for the event, recommended limit: 80 characters'
+        properties:
+          fi:
+            description: Name of the event in Finnish
+            type: string
+          se:
+            description: Name of the event in Swedish
+            type: string
+          en:
+            description: Name of the event in English
+            type: string
+      images:
+        type: array
+        items:
+          $ref: '#/definitions/image'
+      created_time:
+        type: string
+        format: date-time
+        description: Creation time for the event entry.
+      last_modified_time:
+        type: string
+        format: date-time
+        description: >-
+          Time this event was modified in the datastore behind the API (not
+          necessarily in the originating system)
+      info_url:
+        description: Link (URL) to a page with more information about event
+        type: object
+        properties:
+          fi:
+            description: Link to Finnish page
+            type: string
+            format: url
+          se:
+            description: Link to Swedish page
+            type: string
+            format: url
+          en:
+            description: Link to English page
+            type: string
+            format: url
+      description:
+        type: object
+        description: 'Description for the event, several chapters'
+        properties:
+          fi:
+            description: Finnish description of the event
+          se:
+            description: Swedish description of the event
+          en:
+            description: English description of the event
+      short_description:
+        type: object
+        description: 'Short description for the event, recommended limit 140 characters'
+        properties:
+          fi:
+            description: short Finnish description of the event
+          se:
+            description: short Swedish description of the event
+          en:
+            description: short English description of the event
+      date_published:
+        type: string
+        format: date-time
+        description: Date this event is free to be published
+      provider:
+        type: object
+        description: organization responsible for the practical implementation of the event
+        properties:
+          fi:
+            description: provider name in Finnish for the event
+          se:
+            description: provider name in Swedish for the event
+          en:
+            description: provider name in English for the event
+      location_extra_info:
+        type: object
+        description: >-
+          Unstructured extra info about location (like "eastern door of railway
+          station")
+        properties:
+          fi:
+            description: location extra info in Finnish for the event
+          se:
+            description: location extra info in Swedish for the event
+          en:
+            description: location extra info in English for the event
+      start_time:
+        type: string
+        format: date-time
+        description: Time the event will start
+      end_time:
+        type: string
+        format: date-time
+        description: Time the event will end
+      audience:
+        type: array
+        items:
+          $ref: '#/definitions/keyword'
+      data_source:
+        type: string
+        description: >-
+          Unique identifier (URI)for the system from which this event came from,
+          preferably URL with more information about the system and its policies
+      created_by:
+        type: string
+        description: Which API user created this keyword
+      last_modified_by:
+        type: string
+        description: Which API user most recently edited this keyword
+      publisher:
+        type: string
+        description: Organization responsible for this event record.
+  offer:
+    title: Price offers
+    description: >-
+      information record for this event. The prices are not in a structured
+      format and the format depends on information source. An exception to this
+      is the case of free event. These are indicated using is_free flag, which
+      is searchable.
+    type: object
+    properties:
+      price:
+        type: object
+        description: >-
+          Price of the event. These are not bare numbers but instead
+          descriptions of the pricing scheme.
+        properties:
+          fi:
+            type: string
+            description: Finnish translation for the price information
+          sv:
+            type: string
+            description: Swedish translation for the price information
+          en:
+            type: string
+            description: English translation for the price information
+      info_url:
+        description: Link (URL) to a page with more information about offer
+        type: object
+        properties:
+          fi:
+            description: Link to Finnish page
+            type: string
+            format: url
+          se:
+            description: Link to Swedish page
+            type: string
+            format: url
+          en:
+            description: Link to English page
+            type: string
+            format: url
+      description:
+        type: object
+        description: Further description of the pricing
+        properties:
+          fi:
+            type: string
+            description: Finnish price description
+          sv:
+            type: string
+            description: Swedish price description
+          en:
+            type: string
+            description: English price description
+      is_free:
+        type: boolean
+        description: Whether the event is of free admission
+  eventlink:
+    title: Links to related information
+    description: >-
+      Links to entities that the event publisher considers related to this
+      event. Eg. links to catering service available during theatrical
+      production. The links will most likely point to unstructured content, ie.
+      web pages suitable for human viewing.
+    type: object
+    properties:
+      name:
+        type: string
+        description: Name describing contents of the link
+      link:
+        type: string
+        description: link to an external related entity
+      language:
+        type: string
+        description: language of the content behind the link
+paths:
+  /image/:
+    get:
+      summary: Returns a list of images
+      description: >
+        Image endpoint returns images that are used for events, places or
+        organizers.
+      operationId: image_list
+      tags:
+        - image
+      parameters:
+        - $ref: '#/parameters/page_param'
+        - $ref: '#/parameters/pagesize_param'
+        - $ref: '#/parameters/include_param'
+        - $ref: '#/parameters/sort'
+      responses:
+        '200':
+          description: List of images
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/definitions/meta_definition'
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/image'
+    post:
+      summary: Create a new image
+      operationId: image_create
+      description: >-
+        There are two ways to create an image object. The image file can be
+        posted as a multipart request, but the endpoint also accepts a simple
+        JSON object with an external url in the url field. This allows using
+        external images for events without saving them on the API server.
+      tags:
+        - image
+      consumes:
+        - multipart/form-data
+      responses:
+        '201':
+          description: >-
+            Object has been succesfully created. A copy of the object is
+            returned in response body and headers contain Location pointing to
+            the created event
+          schema:
+            $ref: '#/definitions/image'
+        '400':
+          description: >-
+            Input format was not correct, eg. mandatory field was missing or
+            JSON was malformed
+        '401':
+          description: User was not authenticated
+        '403':
+          description: User does not have necessary permissions
+      parameters:
+        - name: image_file
+          in: formData
+          type: file
+  '/image/{id}/':
+    get:
+      summary: Return information for single image
+      operationId: image_retrieve
+      tags:
+        - image
+      responses:
+        '200':
+          description: Image record
+          schema:
+            $ref: '#/definitions/image'
+      parameters:
+        - type: string
+          description: The id for the image
+          in: path
+          name: id
+          required: true
+    put:
+      summary: Update an image
+      description: >-
+        Images can be updated if the user has appropriate access permissions.
+        The original implementation behaves like PATCH, ie. if some field is
+        left out from the PUT call, its value is retained in database. In order
+        to ensure consistent behaviour, users should always supply every field
+        in PUT call.
+      operationId: image_update
+      tags:
+        - image
+      responses:
+        '200':
+          description: Image has been succesfully replaced
+          schema:
+            $ref: '#/definitions/image'
+        '400':
+          description: >-
+            Input format was not correct, eg. mandatory field was missing or
+            JSON was malformed
+        '401':
+          description: User was not authenticated
+        '403':
+          description: User does not have necessary permissions
+      parameters:
+        - type: string
+          in: path
+          name: id
+          required: true
+          description: Identifier for the image to be updated
+        - name: image_object
+          in: body
+          description: >-
+            Image object that should replace the existing image, note that some
+            implementations may retain unspecified fields at their original
+            values.
+          schema:
+            $ref: '#/definitions/image'
+  /keyword/:
+    get:
+      summary: Returns a list of keywords used for describing events
+      description: >
+        <h2 id="using-keyword-endpoint">Using the keyword endpoint</h2>
+
+        <p>Here, categories for events are listed. Events in each category can
+        be found at the
+
+        <code>event</code> endpoint using the query parameter
+        <code>keyword</code>. The common keywords
+
+        used in all events originate from keywords added to Satakunta Events system,
+
+        hence the format <code>pori:topics:fairs</code>.
+
+        <h4 id="keyword-text">Keyword text</h4>
+
+        <p>To find keywords that contain a specific string, use the query
+        parameter <code>text</code>.</p>
+
+        <p>Example:</p>
+
+        <pre><code>keyword/?text=kulttuuri
+
+        </code></pre>
+
+        <p><a href="?text=kulttuuri" title="json">See the result</a></p>
+
+        <h4 id="keyword-source">Keyword source</h4>
+
+        <p>Will restrict keywords to a specific data source.</p>
+
+        <p>Example:</p>
+
+        <pre><code>keyword/?data_source=pori
+
+        </code></pre>
+
+        <p><a href="?data_source=pori" title="json">See the result</a></p>
+
+        <h4 id="ordering">Ordering</h4>
+
+        <p>Default ordering is decreasing order by the number of events found.
+        You may also order results by <code>name</code>.
+
+        <p>Example:</p>
+
+        <pre><code>keyword/?sort=name
+
+        </code></pre>
+
+        <p><a href="?sort=name" title="json">See the result</a></p>
+
+        <h4 id="showing-all-keyword">Showing all keywords</h4>
+
+        <p>By default, only those keywords which have listed events are
+
+        displayed. You may display keywords with zero <code>n_events</code> with
+        the
+            query parameter <code>show_all_keywords</code>.</p>
+      operationId: keyword_list
+      tags:
+        - filter
+      parameters:
+        - $ref: '#/parameters/page_param'
+        - $ref: '#/parameters/pagesize_param'
+        - $ref: '#/parameters/include_param'
+        - name: show_all_keywords
+          in: query
+          type: boolean
+          description: >-
+            Show all keywords, including those that are not associated with any
+            events. Otherwise such keywords are hidden. When show_all_keywords
+            is specified, no other filter is applied, **except** "filter" (match
+            for keywords beginning with string)
+        - name: data_source
+          in: query
+          type: string
+          description: >-
+            Search for keywords (**note**: NOT events) that come from the
+            specified data source (see data source in keyword definition).
+        - name: text
+          in: query
+          type: string
+          description: >-
+            Search for keywords (**note**: NOT events) that contain the given
+            string. This applies even when show_all_keywords is specified.
+        - $ref: '#/parameters/keyword_sort_param'
+      responses:
+        '200':
+          description: List of keywords
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/definitions/meta_definition'
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/keyword'
+  '/keyword/{id}/':
+    get:
+      summary: Return information for single keyword
+      operationId: keyword_retrieve
+      tags:
+        - filter
+      responses:
+        '200':
+          description: Keyword record
+          schema:
+            $ref: '#/definitions/keyword'
+      parameters:
+        - type: string
+          description: Same as id in keyword schema
+          in: path
+          name: id
+          required: true
+  /keyword_set/:
+    get:
+      summary: Return as list of keyword_sets for grouping keywords
+      description: >-
+        Unlike other endpoints, keyword_sets do not support filtering. It is
+        expected that the full result set will remain small enough.
+      operationId: keyword_set_list
+      tags:
+        - filter
+      parameters:
+        - $ref: '#/parameters/page_param'
+        - $ref: '#/parameters/pagesize_param'
+        - $ref: '#/parameters/include_param'
+      responses:
+        '200':
+          description: List of keyword_sets
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/definitions/keyword'
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/keyword_set'
+  '/keyword_set/{id}':
+    get:
+      summary: Return information about single keyword_set
+      operationId: keyword_set_retrieve
+      tags:
+        - filter
+      parameters:
+        - type: string
+          description: Same as id in keyword_set schema
+          in: path
+          name: id
+          required: true
+      responses:
+        '200':
+          description: Keyword_set record
+          schema:
+            $ref: '#/definitions/keyword_set'
+  /place/:
+    get:
+      summary: Returns list of places used for describing events
+      description: >
+        <h2 id="using-place-endpoint">Using the place endpoint</h2>
+
+        <p>Here, locations for events are listed. Events in each location can be
+        found at the
+
+        <code>event</code> endpoint using the query parameter
+        <code>location</code>. Locations are pre-added to the system.
+        <h4 id="place-text">Place text</h4>
+
+        <p>To find places that contain a specific string, use the query
+        parameter <code>text</code>.</p>
+
+        <p>Example:</p>
+
+        <pre><code>place/?text=pori
+
+        </code></pre>
+
+        <p><a href="?text=pori" title="json">See the result</a></p>
+
+        <h4 id="district">District</h4>
+
+        <p>Not in use in Satakunta Events</p>
+        <h4 id="ordering">Ordering</h4>
+
+        <p>Default ordering is decreasing order by the number of events found.
+            You may also order results by <code>name</code>, <code>street_address</code> or <code>postal_code</code>.
+            For example:</p>
+        <pre><code>place/?sort=name
+
+        </code></pre>
+
+        <p><a href="?sort=name" title="json">See the result</a></p>      
+
+        <h4 id="place-source">Place source</h4>
+
+        <p>Will restrict places to a specific data source.</p>
+
+        <p>Example:</p>
+
+        <pre><code>place/?data_source=pori
+
+        </code></pre>
+
+        <p><a href="?data_source=pori" title="json">See the result</a></p>
+
+        <h4 id="showing-all-places">Showing all places</h4>
+
+        <p>By default, only those locations which have listed events are
+
+        displayed. You may display locations with zero <code>n_events</code>
+        with the
+            query parameter <code>show_all_places</code>.</p>
+      operationId: place_list
+      tags:
+        - filter
+      parameters:
+        - $ref: '#/parameters/page_param'
+        - $ref: '#/parameters/pagesize_param'
+        - name: show_all_places
+          in: query
+          type: boolean
+          description: >-
+            Show all places, including those that are not hosting any events.
+            Otherwise such places are hidden. When show_all_places is specified,
+            no other filter is applied.
+        - name: division
+          in: query
+          type: string
+          description: >-
+            You may filter places by specific OCD division id, or by division
+            name. The latter query checks all divisions with the name,
+            regardless of division type. NOTE: Not in use in Satakunta Events
+        - $ref: '#/parameters/place_sort_param'
+      responses:
+        '200':
+          description: List of places
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/definitions/meta_definition'
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/place'
+  '/place/{id}/':
+    get:
+      summary: Return information for single place
+      operationId: place_retrieve
+      tags:
+        - filter
+      responses:
+        '200':
+          description: Place record
+          schema:
+            $ref: '#/definitions/place'
+      parameters:
+        - type: string
+          in: path
+          name: id
+          required: true
+          description: Id as defined in place model
+  /language/:
+    get:
+      summary: Return a list of languages used for describing events
+      description: >-
+        The returned list describes languages used for describing events in this
+        Linked events instance
+      operationId: language_list
+      tags:
+        - language
+      responses:
+        '200':
+          description: Language list
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/definitions/meta_definition'
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/language'
+  '/language/{id}/':
+    get:
+      summary: Return information for single language
+      description: Can be used to retrieve translations for a single language
+      operationId: language_retrieve
+      tags:
+        - language
+      responses:
+        '200':
+          description: Language record
+          schema:
+            $ref: '#/definitions/language'
+      parameters:
+        - type: string
+          in: path
+          name: id
+          required: true
+  /event/:
+    get:
+      summary: Return a list of events
+      description: >-
+        <h2 id="filtering-retrieved-events">Filtering retrieved events</h2>
+
+        <p>Query parameters can be used to filter the retrieved events by
+
+        the following criteria.</p>
+
+        <h3 id="event-time">Event time</h3>
+
+        <p>Use <code>start</code> and <code>end</code> to restrict the date
+        range of returned events.
+
+        Any events that intersect with the given date range will be
+        returned.</p>
+
+        <p>The parameters <code>start</code> and <code>end</code> can be given
+        in the following formats:</p>
+
+        <ul>
+
+        <li>ISO 8601 (including the time of day)</li>
+
+        <li>yyyy-mm-dd</li>
+
+        </ul>
+
+        <p>In addition, <code>today</code> can be used as the value.</p>
+
+        <p>Example:</p>
+
+        <pre><code>event/?start=2014-01-15&amp;end=2014-01-20
+
+        </code></pre>
+
+        <p><a href="?start=2014-01-15&amp;end=2014-01-20" title="json">See the
+        result</a></p>
+
+        <h3 id="event-location">Event location</h3>
+
+        <h4 id="bounding-box">Bounding box</h4>
+
+        <p>To restrict the retrieved events to a geographical region, use
+
+        the query parameter <code>bbox</code> in the format</p>
+
+        <pre><code>bbox=west,south,east,north
+
+        </code></pre>
+
+        <p>Where <code>west</code> is the longitude of the rectangle's western
+        boundary,
+
+        <code>south</code> is the latitude of the rectangle's southern boundary,
+
+        and so on.</p>
+
+        <p>Example:</p>
+
+        <pre><code>event/?bbox=21.7267856118,61.4623491897,21.8666842696,61.4623491897
+
+        </code></pre>
+
+        <p><a href="?bbox=21.7267856118,61.4623491897,21.8666842696,61.4623491897" title="json">See the
+        result</a></p>
+
+        <h4 id="specific-location">Specific location</h4>
+
+        <p>To restrict the retrieved events to a known location(s), use
+
+        the query parameter <code>location</code>, separating values by commas
+
+        if you wish to query for several locations.</p>
+
+        <p>Location ids are found at the <code>place</code> endpoint, which
+        lists the
+
+        locations in decreasing number of events found.
+
+        <p>Example:</p>
+
+        <pre><code>event/?location=pori:4
+
+        </code></pre>
+
+        <p><a href="?location=pori:4" title="json">See the result</a></p>
+
+        <h3 id="event-category">Event category</h3>
+
+        <p>To restrict the retrieved events by category, use the query
+
+        parameter <code>keyword</code>, separating values by commas if you wish
+        to
+
+        query for several locations.</p>
+
+        <p>Keyword ids are found at the <code>keyword</code> endpoint, which
+        lists the
+
+        keywords in decreasing number of events found. The common keywords
+
+        used in all events originate from keywords added to Satakunta Events system.</p>
+
+        <p>Example:</p>
+
+        <pre><code>event/?keyword=pori:topic:fairs
+
+        </code></pre>
+
+        <p><a href="?keyword=pori:topic:fairs" title="json">See the result</a></p>
+
+        <h3 id="event-text">Event text</h3>
+
+        <p>To find out events that contain a specific string in any of the text
+
+        fields, use the query parameter <code>text</code>.</p>
+
+        <p>Example:</p>
+
+        <pre><code>event/?text=jazz
+
+        </code></pre>
+
+        <p><a href="?text=jazz" title="json">See the result</a></p>
+
+        <h2 id="getting-detailed-data">Getting detailed data</h2>
+
+        <p>In the default case, keywords, locations, and other fields that
+
+        refer to separate resources are only displayed as simple references.</p>
+
+        <p>If you want to include the complete data from related resources in
+
+        the current response, use the keyword <code>include</code>. For
+        example:</p>
+
+        <pre><code>event/?include=location,keywords
+
+        </code></pre>
+
+        <p><a href="?include=location,keywords" title="json">See the
+        result</a></p>
+
+        <h2 id="ordering">Ordering</h2>
+
+        <p>Default ordering is decreasing order by
+        <code>last_modified_time</code>.
+
+        You may also order results by <code>start_time</code>,
+        <code>end_time</code>,
+
+        <code>name</code> and <code>duration</code>. For example:</p>
+
+        <pre><code>event/?sort=end_time
+
+        </code></pre>
+
+        <p><a href="?sort=name" title="json">See the result</a></p>
+      operationId: Event_list
+      tags:
+        - event
+      responses:
+        '200':
+          description: List of events
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/definitions/meta_definition'
+              data:
+                type: array
+                items:
+                  $ref: '#/definitions/event'
+      parameters:
+        - $ref: '#/parameters/include_param'
+        - $ref: '#/parameters/event_text_param'
+        - $ref: '#/parameters/event_last_modified_param'
+        - $ref: '#/parameters/event_start_param'
+        - $ref: '#/parameters/event_end_param'
+        - $ref: '#/parameters/event_bbox_param'
+        - $ref: '#/parameters/event_data_source_param'
+        - $ref: '#/parameters/event_location_param'
+        - name: division
+          in: query
+          type: string
+          description: >-
+            You may filter places by specific OCD division id, or by division
+            name. The latter query checks all divisions with the name,
+            regardless of division type. NOTE: Not in use in Satakunta Events API
+        - $ref: '#/parameters/event_keyword_param'
+        - $ref: '#/parameters/event_recurring_param'
+        - $ref: '#/parameters/event_min_duration_param'
+        - $ref: '#/parameters/event_max_duration_param'
+        - $ref: '#/parameters/event_organization_param'
+        - $ref: '#/parameters/event_sort_param'
+    post:
+      summary: Create a new event
+      operationId: event_create
+      tags:
+        - event
+      responses:
+        '201':
+          description: >-
+            Object has been succesfully created. A copy of the object is
+            returned in response body and headers contain Location pointing to
+            the created event
+          schema:
+            $ref: '#/definitions/event'
+        '400':
+          description: >-
+            Input format was not correct, eg. mandatory field was missing or
+            JSON was malformed
+        '401':
+          description: User was not authenticated
+        '403':
+          description: User does not have necessary permissions
+      parameters:
+        - name: event_object
+          in: body
+          schema:
+            $ref: '#/definitions/event'
+  '/event/{id}/':
+    get:
+      summary: Retrieve single event by id
+      operationId: event_retrieve
+      tags:
+        - event
+      responses:
+        '200':
+          description: Single event object
+          schema:
+            $ref: '#/definitions/event'
+      parameters:
+        - name: id
+          in: path
+          type: string
+          description: Event identifier as defined in event schema
+          required: true
+    put:
+      summary: Update an event
+      description: >-
+        Events can be updated if the user has appropriate access permissions.
+        The original implementation behaves like PATCH, ie. if some field is
+        left out from the PUT call, its value is retained in database. In order
+        to ensure consistent behaviour, users should always supply every field
+        in PUT call.
+      operationId: event_update
+      tags:
+        - event
+      responses:
+        '200':
+          description: Event has been succesfully replaced
+          schema:
+            $ref: '#/definitions/event'
+        '400':
+          description: >-
+            Input format was not correct, eg. mandatory field was missing or
+            JSON was malformed
+        '401':
+          description: User was not authenticated
+        '403':
+          description: User does not have necessary permissions
+      parameters:
+        - type: string
+          in: path
+          name: id
+          required: true
+          description: Identifier for the event to be updated
+        - name: event_object
+          in: body
+          description: >-
+            Event object that should replace the existing event, note that some
+            implementations may retain unspecified fields at their original
+            values.
+          schema:
+            $ref: '#/definitions/event'

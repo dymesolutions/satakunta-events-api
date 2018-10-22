@@ -1,0 +1,16 @@
+[
+  {
+    "id": "system",
+    "name": "System datasource",
+    "apiKey": "",
+    "ownerId": null,
+    "userEditable": false
+  },
+  {
+    "id": "pori",
+    "name": "Pori datasource",
+    "apiKey": "",
+    "ownerId": null,
+    "userEditable": false
+  }
+]

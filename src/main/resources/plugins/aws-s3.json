@@ -1,0 +1,13 @@
+{
+  "id": "kotlin-aws-s3",
+  "name": "AWS S3 Upload Plugin",
+  "description": "Upload files to configured AWS S3",
+  "properties": {
+    "bucketName": "",
+    "region": ""
+  },
+  "interface": {
+    "className": "AWSS3Plugin",
+    "packageName": "com.dymesolutions.common.plugins"
+  }
+}

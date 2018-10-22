@@ -1,0 +1,31 @@
+version: '2'
+services:
+    linkedevents-data:
+        build: ./docker/database/
+        environment:
+        - POSTGRES_USER=linkedevents
+        - POSTGRES_PASSWORD=linkedevents
+        - POSTGRES_DB=linkedevents
+        volumes:
+        - pgdata:/c/postgresql/linkeddata
+        ports:
+        - "5432:5432"
+        container_name: linkedevents-data
+    linkedevents-api:
+        build:
+            context: ./
+            dockerfile: ./docker/api/Dockerfile
+        environment:
+        - DATASOURCE_USER=linkedevents
+        - DATASOURCE_PASSWORD=linkedevents
+        - DATASOURCE_DATABASE=linkedevents
+        - DATASOURCE_PORT=5432
+        - DATASOURCE_HOST=linkedevents-data
+        command: ["java", "-server", "-Xms512M", "-Xmx512M", "-XX:NewSize=128M", "-XX:+UseG1GC", "-jar", "linkedevents-api.jar"]
+        ports:
+        - "8080:8080"
+        depends_on:
+        - linkedevents-data
+        container_name: linkedevents-api
+volumes:
+    pgdata:
