@@ -136,12 +136,10 @@ class UserController : Controller {
         }
 
         emailParam?.let {
-            req.queryParams("email")?.let {
-                val response = JsonObject()
-                response.addProperty("exists", Users.findEmailExists(it))
+            val response = JsonObject()
+            response.addProperty("exists", Users.findEmailExists(it))
 
-                return CommonResponse.ok(response).handle(req, res)
-            }
+            return CommonResponse.ok(response).handle(req, res)
         }
 
         return CommonResponse.badRequest("Parameter missing").handle(req, res)
