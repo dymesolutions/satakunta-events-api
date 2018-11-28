@@ -1,0 +1,46 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+h1, h2 {
+    font-family: Verdana, sans-serif;
+}
+
+@media(min-width: 1440px) {
+    .info-page {
+        width: 1440px;
+        margin: 20px auto;
+    }
+}
+
+@media(max-width: 1439px) {
+    .info-page {
+        width: 90%;
+        margin: 20px auto;
+    }
+}
+
+a:link {
+    color: #0569d4;
+    text-decoration: none;
+}
+
+a:visited {
+    color: #0569d4;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #007bff;
+}
+
+a:active {
+    color: #007bff;
+    text-decoration: none;
+}
