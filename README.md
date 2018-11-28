@@ -28,12 +28,14 @@ The environment variables can be set in *docker-compose.yml* file.
 
 The API can be configured in */src/main/resources/app.properties*.
 
-```
-server.hostName				API URL configured here to be attached to the @id field of returned data.
-server.uiUrl				The URL pointing to your UI server, usually same as hostname
-app.defaultOrganization		ID for default organization for new users
-app.moderatorEmails			Comma-separated list of E-mails that receive moderator notifications
-```
+`server.hostName` API URL configured here to be attached to the @id field of returned data.
+
+`server.uiUrl` The URL pointing to your UI server, usually same as hostname
+
+`app.defaultOrganization` ID for default organization for new users
+
+`app.moderatorEmails`Comma-separated list of E-mails that receive moderator notifications
+
 
 If you're planning to use e-mail services, you will need to configure the e-mail server here.
 
