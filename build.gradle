@@ -4,13 +4,13 @@ buildscript {
     ext.sparkjava_thymeleaf_version = '2.7.1'
     ext.sparkjava_pac_version = '2.2.0'
     ext.pac4j_version = '2.2.1'
-    ext.exposed_version = '0.10.5'
+    ext.exposed_version = '0.11.2'
     ext.slf4j_version = '1.7.25'
-    ext.aws_sdk_version = '1.11.421'
+    ext.aws_sdk_version = '1.11.461'
     ext.gson_version = '2.8.5'
     ext.postgis_jdbc_version = '2.2.1'
     ext.hikaricp_version = '3.2.0'
-    ext.fuel_version = '1.15.0'
+    ext.fuel_version = '1.16.0'
 
     repositories {
         mavenCentral()

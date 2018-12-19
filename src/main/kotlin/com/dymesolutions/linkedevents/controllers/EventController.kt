@@ -2,6 +2,8 @@ package com.dymesolutions.linkedevents.controllers
 
 import com.dymesolutions.common.interfaces.Controller
 import com.dymesolutions.common.responses.CommonResponse
+import com.dymesolutions.common.utils.DateUtil.formatter
+import com.dymesolutions.common.utils.DateUtil.jsonDateFormat
 import com.dymesolutions.common.utils.DateUtil.onlyDateFormat
 import com.dymesolutions.common.utils.UserUtil
 import com.dymesolutions.linkedevents.App
@@ -15,8 +17,10 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import org.joda.time.DateTime
+import org.joda.time.IllegalFieldValueException
 import spark.Request
 import spark.Response
+import java.lang.NumberFormatException
 import java.util.*
 
 class EventController : Controller {
@@ -103,33 +107,37 @@ class EventController : Controller {
         fun parseDate(date: String): DateTime {
             return when (date) {
                 "today" -> DateTime.now()
-                else -> DateTime.parse(date, onlyDateFormat)
+                else -> formatter.parseDateTime(date)
             }
+
         }
         // Optional params
-
-        val includeParams = req.queryParams("include")
-        val bbox = handleBboxParams(req.queryParams("bbox"))
-        val pageSize = req.queryParams("page_size")
-        val page = req.queryParams("page")
-        val text = req.queryParams("text")
-        val start = req.queryParams("start")?.let { parseDate(it) }
-        val end = req.queryParams("end")?.let { parseDate(it) }
-        val published = req.queryParams("published")
-        val sort = req.queryParams("sort")
-        val publisher = req.queryParams("publisher")
-        val dataSourceId = req.queryParams("data_source")
-        val location = req.queryParams("location")
-        val keyword = req.queryParams("keyword")
-
-        // Need try because casting parameters to integers.
         try {
+
+            val includeParams = req.queryParams("include")
+            val bbox = handleBboxParams(req.queryParams("bbox"))
+            val pageSize = req.queryParams("page_size")
+            val page = req.queryParams("page")
+            val text = req.queryParams("text")
+            val providerName = req.queryParams("provider_name")
+            val start = req.queryParams("start")?.let { parseDate(it) }
+            val end = req.queryParams("end")?.let { parseDate(it) }
+            val published = req.queryParams("published")
+            val sort = req.queryParams("sort")
+            val publisher = req.queryParams("publisher")
+            val dataSourceId = req.queryParams("data_source")
+            val location = req.queryParams("location")
+            val keyword = req.queryParams("keyword")
+
+            // Need try because casting parameters to integers.
+
             Events.findAll(
                 pageSize?.toInt() ?: 30,
                 page?.toInt() ?: 1,
                 start,
                 end,
                 text,
+                providerName,
                 published?.toBoolean() ?: true,
                 sort,
                 publisher,
@@ -169,6 +177,7 @@ class EventController : Controller {
                                 start = start,
                                 end = end,
                                 text = text,
+                                providerName = providerName,
                                 publisherId = publisher,
                                 dataSourceId = dataSourceId,
                                 locationId = location,
@@ -183,8 +192,16 @@ class EventController : Controller {
 
                     return CommonResponse.ok(response).handle(req, res)
                 }
-        } catch (e: NumberFormatException) {
-            return CommonResponse.badRequest("Passed parameter <page> or <page_size> is not an integer number").handle(req, res)
+        } catch (e: Exception) {
+            return when (e) {
+                is NumberFormatException -> CommonResponse.badRequest("Passed parameter <page> or <page_size> is not an integer number").handle(req, res)
+                is IllegalFieldValueException -> CommonResponse.badRequest("Cannot parse given date").handle(req, res)
+                else -> {
+                    e.printStackTrace()
+                    CommonResponse.badRequest("An error occurred and has been logged").handle(req, res)
+                }
+            }
+
         }
     }
 

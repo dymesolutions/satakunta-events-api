@@ -180,6 +180,7 @@ object Events : Table(name = "events_event") {
         start: DateTime? = null,
         end: DateTime? = null,
         text: String? = null,
+        providerName: String? = null,
         published: Boolean = true,
         publisherId: String? = null,
         dataSourceId: String? = null,
@@ -200,7 +201,7 @@ object Events : Table(name = "events_event") {
                     .slice(id)
                     .select {
                         getSelectExpressions(
-                            textQuery = text, start = start, end = end, publicationStatus = publicationStatus,
+                            textQuery = text, providerName = providerName, start = start, end = end, publicationStatus = publicationStatus,
                             publisherId = publisherId, dataSourceId = dataSourceId, locationId = locationId,
                             keyword = keyword) and
                             (Events.deleted eq false)
@@ -211,7 +212,7 @@ object Events : Table(name = "events_event") {
                     .slice(id)
                     .select {
                         getSelectExpressions(
-                            textQuery = text, start = start, end = end, publicationStatus = publicationStatus,
+                            textQuery = text, providerName = providerName, start = start, end = end, publicationStatus = publicationStatus,
                             publisherId = publisherId, dataSourceId = dataSourceId, locationId = locationId,
                             keyword = keyword) and
                             (Events.createdById eq userId)
@@ -239,7 +240,7 @@ object Events : Table(name = "events_event") {
                             createdTime.minusDays(1).withTime(21, 0, 0, 0),
                             createdTime.withTime(20, 59, 59, 999)))
                     }?.and(Events.deleted eq false) ?: Events.deleted eq false) and
-                    (Events.publicationStatus eq publicationStatus)
+                        (Events.publicationStatus eq publicationStatus)
                 }
                 .count()
         }
@@ -308,6 +309,7 @@ object Events : Table(name = "events_event") {
                 start: DateTime?,
                 end: DateTime?,
                 text: String?,
+                providerName: String?,
                 published: Boolean = true,
                 sort: String?,
                 publisherId: String?,
@@ -333,7 +335,7 @@ object Events : Table(name = "events_event") {
                 .slice(getAllFieldsAndRelativeFields())
                 .select {
                     getSelectExpressions(
-                        textQuery = text, start = start, end = end, publicationStatus = publicationStatus,
+                        textQuery = text, providerName = providerName, start = start, end = end, publicationStatus = publicationStatus,
                         publisherId = publisherId, dataSourceId = dataSourceId, locationId = locationId,
                         keyword = keyword
                     )
@@ -444,6 +446,7 @@ object Events : Table(name = "events_event") {
 
     private fun getSelectExpressions(
         textQuery: String?,
+        providerName: String?,
         start: DateTime?, end: DateTime?,
         publicationStatus: Int,
         publisherId: String?,
@@ -467,7 +470,7 @@ object Events : Table(name = "events_event") {
         // Filter by dates
 
         when {
-        // TODO Refactor constructing to Time zoned dates (in database, time = UTC format)
+            // TODO Refactor constructing to Time zoned dates (in database, time = UTC format)
             start != null && end == null ->
                 opBuild = opBuild.and(Expression.build {
                     (Events.startTime.between(
@@ -562,6 +565,19 @@ object Events : Table(name = "events_event") {
                         (UpperCase(Events.locationExtraInfoFi) like textQueryLike) or
                         (UpperCase(Events.locationExtraInfoSv) like textQueryLike) or
                         (UpperCase(Events.locationExtraInfoEn) like textQueryLike)
+                })
+            }
+            else -> {
+                // Do nothing
+            }
+        }
+
+        when {
+            providerName != null -> {
+                val providerNameQueryLike = "%${providerName.toUpperCase()}%"
+
+                opBuild = opBuild.and(Expression.build {
+                    (UpperCase(Events.providerName) like providerNameQueryLike)
                 })
             }
             else -> {
