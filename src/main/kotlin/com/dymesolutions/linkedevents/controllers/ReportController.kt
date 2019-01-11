@@ -2,9 +2,7 @@ package com.dymesolutions.linkedevents.controllers
 
 import com.dymesolutions.common.responses.CommonResponse
 import com.dymesolutions.common.utils.DateUtil.onlyDateFormat
-import com.dymesolutions.linkedevents.dao.Events
-import com.dymesolutions.linkedevents.dao.Keywords
-import com.dymesolutions.linkedevents.dao.Places
+import com.dymesolutions.linkedevents.dao.*
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import org.joda.time.DateTime
@@ -19,6 +17,7 @@ class ReportController {
 
         Events.countAllForReport(
             published = true,
+            deleted = true,
             createdTime = createdTime?.let { DateTime.parse(it, onlyDateFormat) }
         ).let { eventCount ->
             response.addProperty("published_count", eventCount)
@@ -29,6 +28,10 @@ class ReportController {
             createdTime = createdTime?.let { DateTime.parse(it, onlyDateFormat) }
         ).let { eventCount ->
             response.addProperty("unpublished_count", eventCount)
+        }
+
+        Events.countAllEventsInPublishingQueue().let {eventCount ->
+            response.addProperty("in_queue_count", eventCount)
         }
 
         return CommonResponse.ok(response).handle(req, res)
@@ -78,6 +81,18 @@ class ReportController {
 
             return CommonResponse.ok(response).handle(req, res)
         }
+    }
+
+    fun getUserCount(req: Request, res: Response): Any {
+        val emailsCount = EmailAddresses.countAll()
+        val verifiedEmailsCount = EmailAddresses.countVerified()
+
+        val response = JsonObject()
+
+        response.addProperty("users_registered_count", emailsCount)
+        response.addProperty("users_verified_count", verifiedEmailsCount)
+
+        return CommonResponse.ok(response).handle(req, res)
     }
 
 

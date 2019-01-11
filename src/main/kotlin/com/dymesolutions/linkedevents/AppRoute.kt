@@ -170,6 +170,7 @@ class AppRoute {
                 get("/event/count/") { req, res -> reportController.getEventsCount(req, res) }
                 get("/keyword/usage/count/") { req, res -> reportController.getKeywordUsageCount(req, res) }
                 get("/place/usage/count/") { req, res -> reportController.getPlaceUsageCount(req, res) }
+                get("/user/count/") { req, res -> reportController.getUserCount(req, res) }
             }
 
             // Monitoring endpoint for UI

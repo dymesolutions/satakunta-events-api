@@ -31,6 +31,12 @@ object Users : Table(name = "helevents_user") {
     val isStaff = bool("is_staff")
     val isActive = bool("is_active")
 
+    fun countAll(): Int {
+        return transaction {
+            selectAll().count()
+        }
+    }
+
     fun add(user: UserSave): Int? {
         return transaction {
             insert { users ->

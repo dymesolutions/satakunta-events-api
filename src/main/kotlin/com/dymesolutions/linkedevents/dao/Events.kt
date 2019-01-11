@@ -223,27 +223,48 @@ object Events : Table(name = "events_event") {
 
     fun countAllForReport(
         published: Boolean = true,
+        deleted: Boolean = false,
         createdTime: DateTime?
     ): Int {
+        return transaction {
+            Events.select {
+                buildSelectExpressionForCount(published, deleted, createdTime)
+            }.count()
+        }
+    }
+
+    fun countAllEventsInPublishingQueue(): Int {
+        val publishedStatus = PublicationStatus.keys["draft"] ?: 2
+        return transaction {
+            select {
+                (Events.publicationStatus eq publishedStatus) and
+                    (Events.deleted eq false)
+            }.count()
+        }
+    }
+
+    private fun buildSelectExpressionForCount(published: Boolean = true,
+                                              deleted: Boolean = false,
+                                              createdTime: DateTime?): Op<Boolean> {
+
         val publicationStatus = when {
             published -> PublicationStatus.keys["public"] ?: 1
             else -> PublicationStatus.keys["draft"] ?: 2
         }
 
-        return transaction {
-            Events
-                .select {
-                    (createdTime?.let {
-                        Events.deleted eq false
-                        //createdTime like
-                        (Events.createdTime.between(
-                            createdTime.minusDays(1).withTime(21, 0, 0, 0),
-                            createdTime.withTime(20, 59, 59, 999)))
-                    }?.and(Events.deleted eq false) ?: Events.deleted eq false) and
-                        (Events.publicationStatus eq publicationStatus)
-                }
-                .count()
+        var opBuild = Op.build {
+            (Events.publicationStatus eq publicationStatus)
         }
+
+        createdTime?.let {
+            opBuild = opBuild.and(Expression.build {
+                (Events.createdTime.between(
+                    createdTime.minusDays(1).withTime(21, 0, 0, 0),
+                    createdTime.withTime(20, 59, 59, 999)))
+            })
+        }
+
+        return opBuild
     }
 
     fun findById(id: String): Event? {

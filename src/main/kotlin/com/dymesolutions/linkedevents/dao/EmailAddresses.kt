@@ -23,6 +23,18 @@ object EmailAddresses : Table("account_emailaddress") {
         }
     }
 
+    fun countAll(): Int {
+        return transaction {
+            selectAll().count()
+        }
+    }
+
+    fun countVerified(): Int {
+        return transaction {
+            select { verified eq true }.count()
+        }
+    }
+
     fun verifyById(id: Int) {
         return transaction {
             update({
