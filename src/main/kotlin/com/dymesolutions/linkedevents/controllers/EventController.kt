@@ -3,8 +3,6 @@ package com.dymesolutions.linkedevents.controllers
 import com.dymesolutions.common.interfaces.Controller
 import com.dymesolutions.common.responses.CommonResponse
 import com.dymesolutions.common.utils.DateUtil.formatter
-import com.dymesolutions.common.utils.DateUtil.jsonDateFormat
-import com.dymesolutions.common.utils.DateUtil.onlyDateFormat
 import com.dymesolutions.common.utils.UserUtil
 import com.dymesolutions.linkedevents.App
 import com.dymesolutions.linkedevents.common.utils.MailUtil
@@ -20,7 +18,6 @@ import org.joda.time.DateTime
 import org.joda.time.IllegalFieldValueException
 import spark.Request
 import spark.Response
-import java.lang.NumberFormatException
 import java.util.*
 
 class EventController : Controller {
@@ -236,30 +233,24 @@ class EventController : Controller {
                         val audience = requestBodyJson.get("audience").asJsonArray
 
                         // TODO refactor to "id resolver" Util
-                        keywords.forEach { keyword ->
-                            val keyword = keyword.asJsonObject
-
+                        keywords.forEach {
+                            val keyword = it.asJsonObject
                             val keywordIdUrl = keyword.get("@id").asString
-
                             val keywordUrlComponents = keywordIdUrl.split("/")
 
                             if (keywordUrlComponents.contains("keyword")) {
                                 val keywordId = keywordUrlComponents[keywordUrlComponents.lastIndex - 1]
-
                                 EventKeywords.add(eventId, keywordId)
                             }
                         }
 
                         audience.forEach {
                             val audienceKeyword = it.asJsonObject
-
                             val audienceIdUrl = audienceKeyword.get("@id").asString
-
                             val audienceUrlComponents = audienceIdUrl.split("/")
 
                             if (audienceUrlComponents.contains("keyword")) {
                                 val audienceId = audienceUrlComponents[audienceUrlComponents.lastIndex - 1]
-
                                 EventAudiences.add(eventId, audienceId)
                             }
                         }
@@ -282,9 +273,7 @@ class EventController : Controller {
 
     override fun update(req: Request, res: Response, manager: Boolean): Any {
         val requestBodyJson = jsonParser.parse(req.body()) as JsonObject
-
         val eventId = req.params("eventId")
-
         val profile = UserUtil.getUserProfile(req, res)
 
         profile.get().let { userProfile ->
@@ -325,19 +314,24 @@ class EventController : Controller {
         return CommonResponse.unauthorized().handle(req, res)
     }
 
-    private fun updateEventOffers(offers: JsonArray, eventId: String) {
-
+    private fun updateEventOffers(updatedOffers: JsonArray, eventId: String) {
+        Offers.findAllByEventId(eventId).let { offers ->
+            val offer = (updatedOffers[0] as JsonObject)
+            if (!offers.isEmpty()) {
+                Offers.update(OfferSerializer.fromJson(offer.asJsonObject, eventId), offers[0].id)
+            }
+        }
     }
 
     private fun updateEventKeywords(keywords: JsonArray, eventId: String) {
         if (keywords.size() > 0) {
             // Find all keywords belonging to event
-            EventKeywords.findAllKeywordIdsByEventId(eventId).let {
+            EventKeywords.findAllKeywordIdsByEventId(eventId).let { keywordsByEventId ->
 
                 val kk = ArrayList<String>()
 
-                keywords.forEach { keyword ->
-                    val keyword = keyword.asJsonObject
+                keywords.forEach {
+                    val keyword = it.asJsonObject
 
                     val keywordIdUrl = keyword.get("@id").asString
 
@@ -349,16 +343,16 @@ class EventController : Controller {
                         kk.add(keywordId)
 
                         when {
-                            it.contains(keywordId) -> {
+                            keywordsByEventId.contains(keywordId) -> {
                             }
                             else -> EventKeywords.add(eventId, keywordId)
                         }
                     }
                 }
 
-                it.removeAll(kk)
+                keywordsByEventId.removeAll(kk)
 
-                it.forEach { keyId ->
+                keywordsByEventId.forEach { keyId ->
                     EventKeywords.delete(eventId, keyId)
                 }
             }

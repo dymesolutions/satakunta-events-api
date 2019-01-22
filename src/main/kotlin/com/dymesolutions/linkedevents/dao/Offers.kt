@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 
 object Offers : Table("events_offer") {
     val id = integer("id").primaryKey().autoIncrement()
@@ -50,6 +51,30 @@ object Offers : Table("events_offer") {
                 it[eventId] = offer.eventId
 
             }.generatedKey?.toInt()
+        }
+    }
+
+    fun update(offer: OfferSave, offerId: Int): Int {
+        return transaction {
+            update({Offers.id eq offerId}) {
+                it[price] = offer.price.fi ?: ""
+                it[priceFi] = offer.price.fi
+                it[priceSv] = offer.price.sv
+                it[priceEn] = offer.price.en
+
+                it[infoUrl] = offer.infoUrl.fi ?: ""
+                it[infoUrlFi] = offer.infoUrl.fi
+                it[infoUrlSv] = offer.infoUrl.sv
+                it[infoUrlEn] = offer.infoUrl.en
+
+                it[description] = offer.description.fi ?: ""
+                it[descriptionFi] = offer.description.fi
+                it[descriptionSv] = offer.description.sv
+                it[descriptionEn] = offer.description.en
+
+                it[isFree] = offer.isFree
+                it[eventId] = offer.eventId
+            }
         }
     }
 
