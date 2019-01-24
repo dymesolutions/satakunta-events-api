@@ -15,22 +15,16 @@ class ReportController {
         val response = JsonObject()
         val createdTime = req.queryParams("created_time")
 
-        Events.countAllForReport(
-            published = true,
-            deleted = true,
-            createdTime = createdTime?.let { DateTime.parse(it, onlyDateFormat) }
-        ).let { eventCount ->
-            response.addProperty("published_count", eventCount)
-        }
+        val activeCount = Events.countAllActiveForReport()
+        val publishedCount = Events.countAllPublishedForReport()
+        val unpublishedCount = Events.countAllUnPublishedForReport()
 
-        Events.countAllForReport(
-            published = false,
-            createdTime = createdTime?.let { DateTime.parse(it, onlyDateFormat) }
-        ).let { eventCount ->
-            response.addProperty("unpublished_count", eventCount)
-        }
+        response.addProperty("active_count", activeCount)
+        response.addProperty("published_count", publishedCount)
 
-        Events.countAllEventsInPublishingQueue().let {eventCount ->
+        response.addProperty("unpublished_count", unpublishedCount)
+
+        Events.countAllEventsInPublishingQueue().let { eventCount ->
             response.addProperty("in_queue_count", eventCount)
         }
 
@@ -93,19 +87,5 @@ class ReportController {
         response.addProperty("users_verified_count", verifiedEmailsCount)
 
         return CommonResponse.ok(response).handle(req, res)
-    }
-
-
-    fun getAddedEventsCount(req: Request, res: Response): Any {
-        val createdTime = req.queryParams("created_time")
-
-        Events.countAllForReport(
-            createdTime = createdTime?.let { DateTime.parse(it, onlyDateFormat) }
-        ).let { eventCount ->
-            val response = JsonObject()
-
-            response.addProperty("event_count", eventCount)
-            return CommonResponse.ok(response).handle(req, res)
-        }
     }
 }
