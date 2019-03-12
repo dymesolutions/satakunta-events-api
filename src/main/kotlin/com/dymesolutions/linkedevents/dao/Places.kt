@@ -182,7 +182,7 @@ object Places : Table(name = "events_place") {
                     dataSource = place[Places.dataSourceId],
                     image = null,
                     publisher = place[Places.publisherId],
-                    parent = null,
+                    parent = place[Places.parentId],
                     replacedBy = null,
                     position = place[position],
 
@@ -261,7 +261,7 @@ object Places : Table(name = "events_place") {
                         dataSource = place[Places.dataSourceId],
                         image = null,
                         publisher = place[Places.publisherId],
-                        parent = null,
+                        parent = place[Places.parentId],
                         replacedBy = null,
                         position = place[position],
 

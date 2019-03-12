@@ -30,7 +30,7 @@ data class Place(
     val dataSource: String?,
     val image: String?,
     val publisher: String,
-    val parent: Place?,
+    val parent: String?,
     val replacedBy: Place?,
     val position: Point?
 ) : LinkedEvent()
