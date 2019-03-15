@@ -13,20 +13,16 @@ class ReportController {
 
     fun getEventsCount(req: Request, res: Response): Any {
         val response = JsonObject()
-        val createdTime = req.queryParams("created_time")
 
         val activeCount = Events.countAllActiveForReport()
         val publishedCount = Events.countAllPublishedForReport()
         val unpublishedCount = Events.countAllUnPublishedForReport()
+        val inQueueCount = Events.countAllEventsInPublishingQueue()
 
         response.addProperty("active_count", activeCount)
         response.addProperty("published_count", publishedCount)
-
         response.addProperty("unpublished_count", unpublishedCount)
-
-        Events.countAllEventsInPublishingQueue().let { eventCount ->
-            response.addProperty("in_queue_count", eventCount)
-        }
+        response.addProperty("in_queue_count", inQueueCount)
 
         return CommonResponse.ok(response).handle(req, res)
     }

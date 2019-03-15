@@ -221,12 +221,17 @@ object Events : Table(name = "events_event") {
         }
     }
 
-   fun countAllActiveForReport(): Int {
+    fun countAllActiveForReport(): Int {
+        val start = DateTime.now()
         val publishedStatus = PublicationStatus.keys["public"] ?: 1
         return transaction {
             select {
                 Events.publicationStatus eq publishedStatus and
-                    (Events.deleted eq false)
+                    (Events.deleted eq false) and
+                    (Events.startTime.between(
+                        start.minusDays(1).withTime(21, 0, 0, 0),
+                        start.withTime(20, 59, 59, 999))) or
+                    (Events.endTime.greater(start.minusDays(1).withTime(21, 0, 0, 0)))
             }.count()
         }
     }
@@ -488,7 +493,8 @@ object Events : Table(name = "events_event") {
                 opBuild = opBuild.and(Expression.build {
                     (Events.startTime.between(
                         start.minusDays(1).withTime(21, 0, 0, 0),
-                        start.withTime(20, 59, 59, 999)))
+                        start.withTime(20, 59, 59, 999))) or
+                        (Events.endTime.greater(start.minusDays(1).withTime(21, 0, 0, 0)))
                 })
             start != null && end != null ->
                 opBuild = opBuild.and(Expression.build {
