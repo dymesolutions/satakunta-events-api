@@ -223,15 +223,18 @@ object Events : Table(name = "events_event") {
 
     fun countAllActiveForReport(): Int {
         val start = DateTime.now()
+        val startMidnightUTC = start.minusDays(1).withTime(21, 0, 0, 0)
+        val endMidnightUTC = start.withTime(20, 59, 59, 999)
         val publishedStatus = PublicationStatus.keys["public"] ?: 1
+
         return transaction {
             select {
                 Events.publicationStatus eq publishedStatus and
                     (Events.deleted eq false) and
-                    (Events.startTime.between(
-                        start.minusDays(1).withTime(21, 0, 0, 0),
-                        start.withTime(20, 59, 59, 999))) or
-                    (Events.endTime.greater(start.minusDays(1).withTime(21, 0, 0, 0)))
+                    ((Events.startTime.between(
+                        startMidnightUTC,
+                        endMidnightUTC)) or
+                    (Events.endTime.greater(startMidnightUTC)))
             }.count()
         }
     }
