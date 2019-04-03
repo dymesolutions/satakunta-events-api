@@ -42,8 +42,8 @@ class KeywordSetController : Controller {
             val metaObject = MetaObject.build(
                 KeywordSets.count(),
                 "keyword_set",
-                page?.toInt() ?: 1,
-                pageSize?.toInt() ?: 30)
+                pageSize?.toInt() ?: 30,
+                page?.toInt() ?: 1)
 
             val dataArray = JsonArray()
 
