@@ -1,6 +1,7 @@
 package com.dymesolutions.linkedevents.controllers
 
 import com.dymesolutions.common.responses.CommonResponse
+import com.dymesolutions.common.utils.DateUtil
 import com.dymesolutions.common.utils.DateUtil.onlyDateFormat
 import com.dymesolutions.linkedevents.dao.*
 import com.google.gson.JsonArray
@@ -12,11 +13,21 @@ import spark.Response
 class ReportController {
 
     fun getEventsCount(req: Request, res: Response): Any {
+        fun parseDate(date: String): DateTime {
+            return when (date) {
+                "today" -> DateTime.now()
+                else -> DateUtil.formatter.parseDateTime(date)
+            }
+
+        }
+
+        val createdTime = req.queryParams("created_time")
+
         val response = JsonObject()
 
         val activeCount = Events.countAllActiveForReport()
-        val publishedCount = Events.countAllPublishedForReport()
-        val unpublishedCount = Events.countAllUnPublishedForReport()
+        val publishedCount = Events.countAllPublishedForReport(createdTime?.let { parseDate(it) })
+        val unpublishedCount = Events.countAllUnPublishedForReport(createdTime?.let { parseDate(it) })
         val inQueueCount = Events.countAllEventsInPublishingQueue()
 
         response.addProperty("active_count", activeCount)

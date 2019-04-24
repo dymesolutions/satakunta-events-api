@@ -239,20 +239,47 @@ object Events : Table(name = "events_event") {
         }
     }
 
-    fun countAllUnPublishedForReport(): Int {
+    fun countAllUnPublishedForReport(createdTime: DateTime?): Int {
         val publishedStatus = PublicationStatus.keys["draft"] ?: 2
+
+        var opBuild = Op.build {
+            (publicationStatus eq publishedStatus) and
+                (deleted eq false)
+        }
+
+        createdTime?.let {
+            opBuild = opBuild.and(Expression.build {
+                Events.createdTime greaterEq  createdTime
+            })
+        }
+
         return transaction {
             select {
-                Events.publicationStatus eq publishedStatus
+                //Events.publicationStatus eq publishedStatus
+                opBuild
             }.count()
         }
     }
 
-    fun countAllPublishedForReport(): Int {
+    fun countAllPublishedForReport(createdTime: DateTime?): Int {
         val publishedStatus = PublicationStatus.keys["public"] ?: 1
+
+        var opBuild = Op.build {
+            (publicationStatus eq publishedStatus) and
+                (deleted eq false)
+        }
+
+        createdTime?.let {
+            opBuild = opBuild.and(Expression.build {
+                Events.createdTime greaterEq createdTime
+            })
+        }
+
+
         return transaction {
             select {
-                Events.publicationStatus eq publishedStatus
+               //Events.publicationStatus eq publishedStatus
+                opBuild
             }.count()
         }
     }
