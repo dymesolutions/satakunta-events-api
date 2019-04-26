@@ -243,8 +243,7 @@ object Events : Table(name = "events_event") {
         val publishedStatus = PublicationStatus.keys["draft"] ?: 2
 
         var opBuild = Op.build {
-            (publicationStatus eq publishedStatus) and
-                (deleted eq false)
+            (publicationStatus eq publishedStatus)
         }
 
         createdTime?.let {
@@ -265,8 +264,7 @@ object Events : Table(name = "events_event") {
         val publishedStatus = PublicationStatus.keys["public"] ?: 1
 
         var opBuild = Op.build {
-            (publicationStatus eq publishedStatus) and
-                (deleted eq false)
+            (publicationStatus eq publishedStatus)
         }
 
         createdTime?.let {
