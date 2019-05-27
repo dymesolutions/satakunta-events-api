@@ -1,6 +1,8 @@
 package com.dymesolutions.common.utils
 
 import org.eclipse.jetty.server.AbstractNCSARequestLog
+import org.eclipse.jetty.server.CustomRequestLog
+import org.eclipse.jetty.server.RequestLogWriter
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 import org.eclipse.jetty.util.thread.ThreadPool
@@ -26,9 +28,9 @@ object RequestLogUtils {
 
 private class RequestLogFactory
 constructor(private val logger: Logger) {
-
     fun create(): AbstractNCSARequestLog {
-        return object : AbstractNCSARequestLog() {
+        val writer = RequestLogWriter()
+        return object : AbstractNCSARequestLog(writer) {
             override fun isEnabled(): Boolean {
                 return true
             }
