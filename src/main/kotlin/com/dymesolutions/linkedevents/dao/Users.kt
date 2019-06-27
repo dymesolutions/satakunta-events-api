@@ -50,7 +50,7 @@ object Users : Table(name = "helevents_user") {
                 users[isActive] = user.isActive
                 users[dateJoined] = DateTime.now()
                 users[uuid] = UUID.randomUUID()
-            }.generatedKey?.toInt()
+            } get id
         }
     }
 

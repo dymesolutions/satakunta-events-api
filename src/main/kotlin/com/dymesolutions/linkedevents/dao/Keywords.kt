@@ -29,7 +29,7 @@ object EventAudiences : Table("events_event_audience") {
             insert {
                 it[EventAudiences.eventId] = eventId
                 it[EventAudiences.keywordId] = audienceId
-            }.generatedKey?.toInt()
+            } get id
         }
     }
 
@@ -76,7 +76,7 @@ object EventKeywords : Table("events_event_keywords") {
             insert {
                 it[EventKeywords.eventId] = eventId
                 it[EventKeywords.keywordId] = keywordId
-            }.generatedKey?.toInt()
+            } get id
         }
     }
 

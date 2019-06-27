@@ -19,7 +19,7 @@ object EmailAddresses : Table("account_emailaddress") {
                 it[verified] = false
                 it[primary] = true
                 it[EmailAddresses.userId] = userId
-            }.generatedKey?.toInt()
+            } get id
         }
     }
 

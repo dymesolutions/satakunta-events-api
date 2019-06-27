@@ -21,7 +21,7 @@ object UserPasswordResets : Table("user_password_reset") {
                 it[resetKey] = userPasswordReset.resetKey
                 it[dateExpires] = userPasswordReset.dateExpires
             }
-        }.generatedKey?.toInt()
+        } get id
     }
 
     fun findByResetKey(resetKey: String): UserPasswordReset? {

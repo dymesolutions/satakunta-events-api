@@ -37,7 +37,7 @@ object Images : Table("events_image") {
                 it[licenseId] = image.licenseId
                 it[photographerName] = image.photographerName
                 it[dataSourceId] = image.dataSourceId
-            }.generatedKey?.toInt()
+            } get id
         }
     }
 

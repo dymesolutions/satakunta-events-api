@@ -50,7 +50,7 @@ object Offers : Table("events_offer") {
                 it[isFree] = offer.isFree
                 it[eventId] = offer.eventId
 
-            }.generatedKey?.toInt()
+            } get id
         }
     }
 
