@@ -1018,7 +1018,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?text=kulttuuri" title="json">See the result</a></p>
+        <p><a href="keyword/?text=kulttuuri" title="json">See the result</a></p>
 
         <h4 id="keyword-source">Keyword source</h4>
 
@@ -1030,7 +1030,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?data_source=pori" title="json">See the result</a></p>
+        <p><a href="keyword/?data_source=pori" title="json">See the result</a></p>
 
         <h4 id="ordering">Ordering</h4>
 
@@ -1043,7 +1043,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?sort=name" title="json">See the result</a></p>
+        <p><a href="keyword/?sort=name" title="json">See the result</a></p>
 
         <h4 id="showing-all-keyword">Showing all keywords</h4>
 
@@ -1173,7 +1173,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?text=pori" title="json">See the result</a></p>
+        <p><a href="place/?text=pori" title="json">See the result</a></p>
 
         <h4 id="district">District</h4>
 
@@ -1187,7 +1187,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?sort=name" title="json">See the result</a></p>      
+        <p><a href="place/?sort=name" title="json">See the result</a></p>
 
         <h4 id="place-source">Place source</h4>
 
@@ -1199,7 +1199,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?data_source=pori" title="json">See the result</a></p>
+        <p><a href="place/?data_source=pori" title="json">See the result</a></p>
 
         <h4 id="showing-all-places">Showing all places</h4>
 
@@ -1333,7 +1333,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?start=2014-01-15&amp;end=2014-01-20" title="json">See the
+        <p><a href="event/?start=2014-01-15&amp;end=2014-01-20" title="json">See the
         result</a></p>
 
         <h3 id="event-location">Event location</h3>
@@ -1361,7 +1361,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?bbox=21.7267856118,61.4623491897,21.8666842696,61.4623491897" title="json">See the
+        <p><a href="event/?bbox=21.7267856118,61.4623491897,21.8666842696,61.4623491897" title="json">See the
         result</a></p>
 
         <h4 id="specific-location">Specific location</h4>
@@ -1383,7 +1383,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?location=pori:4" title="json">See the result</a></p>
+        <p><a href="event/?location=pori:4" title="json">See the result</a></p>
 
         <h3 id="event-category">Event category</h3>
 
@@ -1407,7 +1407,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?keyword=pori:topic:fairs" title="json">See the result</a></p>
+        <p><a href="event/?keyword=pori:topic:fairs" title="json">See the result</a></p>
 
         <h3 id="event-text">Event text</h3>
 
@@ -1421,7 +1421,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?text=jazz" title="json">See the result</a></p>
+        <p><a href="event/?text=jazz" title="json">See the result</a></p>
 
         <h2 id="getting-detailed-data">Getting detailed data</h2>
 
@@ -1438,7 +1438,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?include=location,keywords" title="json">See the
+        <p><a href="event/?include=location,keywords" title="json">See the
         result</a></p>
 
         <h2 id="ordering">Ordering</h2>
@@ -1455,7 +1455,7 @@ paths:
 
         </code></pre>
 
-        <p><a href="?sort=name" title="json">See the result</a></p>
+        <p><a href="event/?sort=name" title="json">See the result</a></p>
       operationId: Event_list
       tags:
         - event
